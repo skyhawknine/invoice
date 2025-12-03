@@ -1,180 +1,191 @@
-# Invoice Smart Contract (Polygon)
-
-A secure, robust on-chain solution for issuing, managing, and paying invoices in both native and ERC-20 tokens.
+# InvoiceContract: On-Chain Invoicing Smart Contract
 
 ## Overview
-This smart contract enables businesses, DAOs, and developers to seamlessly issue and process invoices directly on-chain. It acts as a decentralized invoice book, supporting both native (MATIC) and ERC-20 token payments, with on-chain tracking, event logs, and integration-ready API methods.
+
+**InvoiceContract** is a robust, multi-network Solidity smart contract for managing, issuing, paying, and tracking invoices entirely on-chain. This enables secure, automated invoice workflows for businesses, DAOs, and individual users, supporting both native and ERC-20 token payments on any EVM-compatible blockchain.
+
+This repository provides the complete contract source code, deployment information, and supporting documentation for integrating InvoiceContract into your dApp or workflow.
 
 ---
 
 ## Live Deployment
 
-- **Network:** Polygon Mainnet
+### Polygon Mainnet
 - **Contract Address:** [`0xD58D286197395C57Ee8dA820212Dda1194294313`](https://polygonscan.com/address/0xD58D286197395C57Ee8dA820212Dda1194294313)
-- **Block Explorer:** [View on PolygonScan](https://polygonscan.com/address/0xD58D286197395C57Ee8dA820212Dda1194294313)
+- **Network:** Polygon Mainnet
 
 ### Dashboard
-- **Live Dashboard:** [https://bnl-invoice.red-triplane.com/](https://bnl-invoice.red-triplane.com/)
-  
-  The dashboard provides:
-  - Real-time invoice search, filtering, and listing by ID, status, and more
-  - Payment tracking and on-chain status updates
-  - Easy access to contract information and deployment details
-  - User-friendly interface with network-aware views
-  - Public overview of all issued, paid, or cancelled invoices
+- **Web Dashboard:** [https://bnl-invoice.red-triplane.com/](https://bnl-invoice.red-triplane.com/)
+
+The dashboard provides an interactive interface for users to:
+- View, filter, and search all invoices on-chain
+- Track real-time invoice status, payments, and history
+- Instantly access contract details and network-specific data
+- Manage invoices across supported EVM networks with a unified UI
 
 ---
 
 ## Features
-- **Issue Invoices:** Issue new invoices for native or ERC-20 token payments
-- **On-chain Status:** Track invoice status (ISSUED, PAID, CANCELLED, or expired)
-- **Flexible Payments:** Accept payments in MATIC or any ERC-20 token
-- **Batch Listing and Search:** Efficient batch retrieval and searching by invoice IDs
-- **Robust Events:** Emits events for all key actions (issue, pay, cancel, expire)
-- **Expiration Handling:** Automatically prevents payment/cancellation of expired invoices
-- **Permissioned Cancellation:** Only the issuer can cancel an invoice
-- **Secure Payments:** Leverages OpenZeppelin's SafeERC20 for token transfers and prevents accidental native transfers
-- **Full Metadata:** Stores comprehensive deployment and configuration metadata
+
+- **On-chain Invoice Management:** Issue, cancel, and query invoices directly via blockchain.
+- **Native & ERC-20 Payments:** Supports network native tokens (e.g., POL on Polygon) and any ERC-20 token.
+- **Multi-Network Support:** Deployable to any EVM-compatible chain; tested on Polygon Mainnet.
+- **Rich Metadata:** Every invoice contains all required data, including issuer, payee, amount (18 decimals), currency, and expiry.
+- **Transparent Status Tracking:** Real-time updates on invoice state—ISSUED, PAID, or CANCELLED—fully auditable on-chain.
+- **Batch & Paginated Queries:** Efficient methods for listing and retrieving large sets of invoices.
+- **Dashboard Integration:** User-friendly interface for non-technical users and back-office operations.
+- **Strong Security:** Permission checks and strict validation to prevent unauthorized actions and ensure data integrity.
 
 ---
 
 ## Contract Overview
-This smart contract implements a decentralized, auditable invoicing system. Invoices are recorded immutably on-chain, including:
-- The issuer, payee, token type, amount, and expiration
-- Payment details, including payer and payment block
-- Strict enforcement of invoice statuses: only eligible invoices can be paid/cancelled
-- Robust querying interfaces for integration with off-chain apps, bots, or dashboards
+
+**InvoiceContract** acts as an on-chain invoice book. Each invoice is tied to a unique 32-byte identifier and stores payer/payee info, amount, token/currency type, expiry, and payment status. Invoices can be:
+- **Issued** by any user or smart contract
+- **Paid** in native or ERC-20 tokens, with proper amount/account checks
+- **Cancelled** by the issuer before payment or expiry
 
 **Main Use Cases:**
-- Businesses or freelancers issuing invoices to clients
-- DAOs tracking grant, bounty, or reimbursement payments
-- Developers and dApps integrating on-chain payment requests
+- Automating B2B or DAO payments and settlements
+- On-chain accounting and audit for services or goods
+- Payment gateways for SaaS or subscription models
 
 ---
 
 ## Technical Details
 
 ### Contract Structure
+- **Structs:**
+  - `ContractInfo`: Metadata about deployment, version, and environment
+  - `InvoiceData`: All details for each invoice (see below)
+- **Enum:**
+  - `InvoiceStatus`: {ISSUED, PAID, CANCELLED}
+- **Mappings:**
+  - `invoicesStorage`: Maps 32-byte UUID to stored `InvoiceData`
 
-- **Main Contract:** `InvoiceContract`
-- **Key Data Structures:**
-  - `ContractInfo`: Metadata about this deployment (name, version, network, etc.)
-  - `InvoiceData`: On-chain record per invoice (issuer, payee, token, status, etc.)
-  - `InvoiceStatus` (enum): `ISSUED` (0), `PAID` (1), `CANCELLED` (2)
-- **Core Events:** `InvoiceIssued`, `InvoicePaid`, `InvoiceCancelled`, `InvoiceExpired`
-- **Security:**
-  - Only issuer can cancel
-  - Expired invoices cannot be paid or cancelled
-  - Utilizes SafeERC20 for all ERC-20 operations
-  - Reverts on direct native token transfers to the contract
+### Data Structures
 
-### Key Functions
+#### InvoiceData
+| Field               | Type      | Description                                                                                   |
+|---------------------|-----------|-----------------------------------------------------------------------------------------------|
+| invoiceId           | string    | Unique 32-byte ID of the invoice                                                              |
+| issuedBy            | address   | Address that issued the invoice                                                               |
+| erc20TokenAddress   | address   | Token for payment (zero address for native token)                                             |
+| payToAddress        | address   | Address to receive payment                                                                    |
+| amount_in18decAtoms | uint256   | Amount, always 18 decimal atoms (normalized to token decimals if needed)                      |
+| issuedAt            | uint256   | Timestamp when invoice was issued                                                             |
+| expiresAt           | uint256   | Timestamp when invoice expires                                                                |
+| status              | enum      | ISSUED (0), PAID (1), CANCELLED (2)                                                           |
+| paidBy              | address   | Payer (populated on payment)                                                                  |
+| paidAtBlockNumber   | uint256   | Block number at time of payment                                                               |
+| isNativeToken       | bool      | True if native token (ERC-20 address is zero)                                                 |
 
-- `issueInvoice(...)`: Issues a new invoice with relevant parameters
-- `payInvoice(invoiceId)`: Pays a specified invoice if payable (in MATIC/ERC-20)
-- `cancelInvoice(invoiceId)`: Cancellation (by issuer, only if eligible)
-- `findInvoices(invoiceIds)`: Batch lookup of invoices by ID
-- `listInvoices(batchOffset, batchSize)`: Paginated on-chain listing
-- `getContractInfo()`: Returns network, deployer, and contract metadata
-- `totalNumberOfInvoices()`: Count of invoices ever issued
+#### ContractInfo
+| Field            | Type    | Description                                    |
+|------------------|---------|------------------------------------------------|
+| name             | string  | Deployed contract/app name                      |
+| version          | string  | Application version                             |
+| networkName      | string  | Target network name                             |
+| contractAddress  | address | This contract's address                         |
+| deployer         | address | Deployer's address                              |
+| description      | string  | Deployment description                          |
+| deployedAt       | uint256 | Block number at which deployed                  |
+| compilerVersion  | string  | Solidity version used                           |
+| chainId          | uint256 | EVM chain ID                                    |
+| interfaceId      | string  | Arbitrary interface/API version identifier       |
 
-#### InvoiceData Structure (per invoice)
-```solidity
-struct InvoiceData {
-  string invoiceId;           // Unique 32-byte ID
-  address issuedBy;           // Issuer address
-  address erc20TokenAddress;  // Token used (address(0) for native)
-  address payToAddress;       // Payment recipient
-  uint256 amount_in18decAtoms;// Amount (18 decimals precision)
-  uint256 issuedAt;           // Timestamp
-  uint256 expiresAt;          // Expiry timestamp
-  InvoiceStatus status;       // 0=ISSUED, 1=PAID, 2=CANCELLED
-  address paidBy;             // Who paid
-  uint256 paidAtBlockNumber;  // Payment block
-  bool isNativeToken;         // True for MATIC, false for ERC-20
-}
-```
+### Key Functions and Events
 
-#### InvoiceStatus Enum
-```solidity
-enum InvoiceStatus {
-  ISSUED,     // 0
-  PAID,       // 1
-  CANCELLED   // 2
-}
-```
+- `issueInvoice(...)`: Issues a new invoice with all required data; emits `InvoiceIssued` event.
+- `payInvoice(invoiceId)`: Pay an invoice—validates status, expiry, payer's funds/allowance; emits `InvoicePaid` event.
+- `cancelInvoice(invoiceId)`: Issuer may cancel an open, non-paid invoice; emits `InvoiceCancelled`.
+- `findInvoices(invoiceIds[])`: Retrieve multiple invoices by ID.
+- `listInvoices(batchOffset, batchSize)`: Paginated listing for batch/query processing.
+- `totalNumberOfInvoices()`: Returns total count for UI/accounting.
+- `getContractInfo()`: Returns deployment metadata.
+
+**Events:**
+- `InvoiceIssued`
+- `InvoicePaid`
+- `InvoiceCancelled`
+- `InvoiceExpired`
 
 ---
 
-## Usage Instructions
+## Usage
+
+### Accessing the Contract
+
+#### On-Chain (Web3/Ethers/Hardhat)
+
+```solidity
+// Example using ethers.js
+const contract = new ethers.Contract(
+  '0xD58D286197395C57Ee8dA820212Dda1194294313',
+  InvoiceContractABI,
+  providerOrSigner
+);
+```
+
+#### Python/Web3.py Example
+```python
+contract = web3.eth.contract(address='0xD58D286197395C57Ee8dA820212Dda1194294313', abi=InvoiceContract_ABI)
+```
 
 ### Issuing an Invoice
-To issue an invoice:
+
 ```python
-# Example using web3.py or similar integration
-contract.functions.issueInvoice(
-    invoiceId,                 # Unique 32-byte string (recommended: hex)
-    erc20TokenAddress,         # Address of ERC-20 token or 0x0 for native/MATIC
-    payToAddress,              # Address to receive payment
-    amount_in18decAtoms,       # Amount (in 1e18 for MATIC or equivalent)
-    expiresAt                  # Invoice expiry as unix timestamp
-).transact({'from': issuer_address})
+invoice_id = b'myuniqueinvoiceidxxxxxxxxxx......'  # must be exactly 32 bytes (string/hex)
+tx = contract.functions.issueInvoice(
+    invoice_id,
+    Web3.toChecksumAddress('0x0000000000000000000000000000000000000000'),  # Native POL
+    Web3.toChecksumAddress('0xRecipientAddress...'),
+    int(1 * (10**18)),  # 1 POL or 1 ERC20 in 18 decimals
+    expiresAtTimestamp
+).transact({'from': myaddress})
 ```
 
-### Paying an Invoice
+### Paying an Invoice (Native or ERC-20)
+- For native token (POL): send `msg.value` equal to `amount_in18decAtoms`.
+- For ERC-20 tokens: approve the contract before calling `payInvoice`.
 
-For a native MATIC payment:
 ```python
-contract.functions.payInvoice(invoiceId).transact({
-    'from': payer_address,
-    'value': amount_in18decAtoms # Send the correct MATIC amount
+# Pay native token
+contract.functions.payInvoice(invoice_id).transact({
+    'from': user,
+    'value': invoice_amount
 })
+
+# Pay via ERC-20
+erc20_token.functions.approve(contract_address, invoice_amount).transact({'from': payer})
+contract.functions.payInvoice(invoice_id).transact({'from': payer})
 ```
 
-For ERC-20 token payments:
+### Querying Invoices
 ```python
-# Approve first!
-token.functions.approve(
-    contract_address,
-    token_amount_in_token_decimals
-).transact({'from': payer_address})
-
-# Then pay:
-contract.functions.payInvoice(invoiceId).transact({'from': payer_address})
+# Get all invoices (paginated)
+batch = contract.functions.listInvoices(0, 50).call()
+# Get one or more by ID
+invoice = contract.functions.findInvoices([invoice_id]).call()
 ```
 
-### List Invoices
-Batch retrieval (useful for pagination):
+### Canceling an Invoice
+Issuer only:
 ```python
-contract.functions.listInvoices(batchOffset, batchSize).call()
-```
-
-### Find Invoices By IDs
-```python
-contract.functions.findInvoices([id1, id2, ...]).call()
-```
-
-### Get Contract Info
-```python
-contract.functions.getContractInfo().call()
+contract.functions.cancelInvoice(invoice_id).transact({'from': issuer})
 ```
 
 ---
 
 ## Important Notes
-- **Invoice IDs must be exactly 32 bytes** (for compatibility with contract mapping keys).
-- **Expiration is enforced:** Expired invoices cannot be paid/cancelled; expired events are emitted if applicable.
-- **Issuer controls cancellation:** Only the creator may cancel, if unpaid/uncancelled/unexpired.
-- **Decimal Handling:** All amounts are stored in 1e18/"18 decimals" format for standardization; conversion is auto-handled for ERC-20 tokens with different decimals.
-- **Direct Deposit Prohibited:** Sending native tokens directly to the contract will revert.
-- **Security:** All ERC-20 transfers utilize SafeERC20 to prevent stuck tokens and failed transfers.
+- **Invoice IDs MUST be exactly 32 bytes** (hex string or utf-8 string of 32 characters).
+- For ERC-20 invoices, allowance and decimals conversion are handled internally.
+- Only the issuer can cancel an invoice before it's paid/expired.
+- Expired invoices cannot be paid or cancelled.
+- Direct native token (POL) transfers to the contract are rejected for security.
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE). All code and documentation herein are open for public use and modification, provided original rights and attributions are preserved.
-
----
-
-For more information, or to interact with the contract directly, visit the [live dashboard](https://bnl-invoice.red-triplane.com/) or inspect the deployment on [PolygonScan](https://polygonscan.com/address/0xD58D286197395C57Ee8dA820212Dda1194294313).
+This project and smart contract are licensed under the [MIT License](./LICENSE).
