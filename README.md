@@ -1,4 +1,4 @@
-# InvoiceContract: On-Chain Invoicing Smart Contract
+# Invoice: On-Chain Invoicing Smart Contract
 
 ## Overview
 
