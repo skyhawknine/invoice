@@ -50,7 +50,8 @@ contract InvoiceContract {
     ContractInfo private contractInfo;
 
     event InvoiceIssued(
-        string indexed invoiceId,
+        string indexed invoiceId_indexed,
+        string invoiceId,
         address indexed issuedBy,
         address erc20TokenAddress,
         address payToAddress,
@@ -60,19 +61,22 @@ contract InvoiceContract {
     );
 
     event InvoicePaid(
-        string indexed invoiceId,
+        string indexed invoiceId_indexed,
+        string invoiceId,
         address indexed payer,
         address indexed paidBy,
         uint256 amount_in18decAtoms
     );
 
     event InvoiceCancelled(
-        string indexed invoiceId,
+        string indexed invoiceId_indexed,
+        string invoiceId,
         address indexed cancelledBy
     );
 
     event InvoiceExpired(
-        string indexed invoiceId
+        string indexed invoiceId_indexed,
+        string invoiceId
     );
 
     constructor(
@@ -116,7 +120,7 @@ contract InvoiceContract {
         require(invoice.issuedBy != address(0), "InvoiceNotFound: Invoice does not exist");
 
         if (invoice.status == InvoiceStatus.ISSUED && block.timestamp > invoice.expiresAt) {
-            emit InvoiceExpired(invoiceId);
+            emit InvoiceExpired(invoiceId, invoiceId);
             revert("InvoiceExpiredError: Invoice has expired");
         }
     }
@@ -240,6 +244,7 @@ contract InvoiceContract {
 
         emit InvoiceIssued(
             invoiceId,
+            invoiceId,
             msg.sender,
             erc20TokenAddress,
             payToAddress,
@@ -270,7 +275,7 @@ contract InvoiceContract {
 
         invoice.status = InvoiceStatus.CANCELLED;
 
-        emit InvoiceCancelled(invoiceId, msg.sender);
+        emit InvoiceCancelled(invoiceId, invoiceId, msg.sender);
 
         return true;
     }
@@ -305,6 +310,7 @@ contract InvoiceContract {
 
             emit InvoicePaid(
                 invoiceId,
+                invoiceId,
                 msg.sender,
                 msg.sender,
                 invoice.amount_in18decAtoms
@@ -337,6 +343,7 @@ contract InvoiceContract {
             token.safeTransferFrom(msg.sender, invoice.payToAddress, amount_inTokenCustomDecimals);
 
             emit InvoicePaid(
+                invoiceId,
                 invoiceId,
                 msg.sender,
                 msg.sender,
