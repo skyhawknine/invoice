@@ -1,8 +1,8 @@
-# Invoice: On-Chain Invoicing Smart Contract
+# Invoice.sol: On-Chain Invoicing Smart Contract
 
 ## Overview
 
-**InvoiceContract** is a robust, multi-network Solidity smart contract for managing, issuing, paying, and tracking invoices entirely on-chain. This enables secure, automated invoice workflows for businesses, DAOs, and individual users, supporting both native and ERC-20 token payments on any EVM-compatible blockchain.
+**Invoice.sol** is a robust, multi-network Solidity smart contract for managing, issuing, paying, and tracking invoices entirely on-chain. This enables secure, automated invoice workflows for businesses, DAOs, and individual users, supporting both native and ERC-20 token payments on any EVM-compatible blockchain.
 
 This repository provides the complete contract source code, deployment information, and supporting documentation for integrating InvoiceContract into your dApp or workflow.
 
@@ -28,7 +28,7 @@ The dashboard provides an interactive interface for users to:
 ## Features
 
 - **On-chain Invoice Management:** Issue, cancel, and query invoices directly via blockchain.
-- **Native & ERC-20 Payments:** Supports network native tokens (e.g., POL on Polygon) and any ERC-20 token.
+- **Native & ERC-20 Payments:** Supports network native tokens (ETH on Mainnet, POL on Polygon, etc.) and any ERC-20 token.
 - **Multi-Network Support:** Deployable to any EVM-compatible chain; tested on Polygon Mainnet.
 - **Rich Metadata:** Every invoice contains all required data, including issuer, payee, amount (18 decimals), currency, and expiry.
 - **Transparent Status Tracking:** Real-time updates on invoice state—ISSUED, PAID, or CANCELLED—fully auditable on-chain.
